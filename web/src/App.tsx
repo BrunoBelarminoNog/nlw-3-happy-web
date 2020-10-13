@@ -1,10 +1,14 @@
 import React from 'react';
 
+import './styles/global.css';
+
+import Routes from './routes';
+
+//JSX - Javascript XML
+
 function App() {
   return (
-    <div className="App">
-      <h1>Hellow world!</h1>
-    </div>
+    <Routes />
   );
 }
 
