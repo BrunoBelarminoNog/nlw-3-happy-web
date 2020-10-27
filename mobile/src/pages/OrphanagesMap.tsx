@@ -1,18 +1,40 @@
-import React from 'react'
+import React, { useState} from 'react'
 import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps'
 import { Feather } from '@expo/vector-icons'
+import {RectButton} from 'react-native-gesture-handler'
 
 
 import { StyleSheet, Text, View, Dimensions, TouchableOpacity } from 'react-native';
 
-import mapMarker from '../images/map-marker.png' //declarar: declare module "*.png" /dentro da pasta @types, no arquivo index.d.ts
-import { useNavigation } from '@react-navigation/native';
+import mapMarkerIcon from '../images/map-marker.png' //declarar: declare module "*.png" /dentro da pasta @types, no arquivo index.d.ts
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import api from '../services/api';
 
+
+interface Orphanage {
+    id: number,
+    name: string,
+    latitude: number,
+    longitude: number
+}
 
 export default function  OrphanagesMap() {
+    const [orphanages, setOrphanages] = useState<Orphanage[]>([]);
+
     const navigation = useNavigation();
-    function handleNavigateToOrphanageDetails() {
-        navigation.navigate('OrphanageDetails')
+
+    useFocusEffect(() => {
+        api.get('/orphanages').then(res => {
+            setOrphanages(res.data)
+        })
+    })
+
+
+    function handleNavigateToOrphanageDetails(id: number) {
+        navigation.navigate('OrphanageDetails', {id})
+    }
+    function handleNavigateToCreateOrphanage() {
+        navigation.navigate('SelectMapPosition')
     }
 
 
@@ -23,33 +45,38 @@ export default function  OrphanagesMap() {
                 provider={PROVIDER_GOOGLE}
                 initialRegion={{ latitude: -23.5555257, longitude: - 46.6119504, latitudeDelta: 0.08, longitudeDelta: 0.08 }}
             >
-                <Marker
-                    icon={mapMarker}
-                    coordinate={{
-                        latitude: -23.5555257,
-                        longitude: - 46.6119504
-                    }}
-                    calloutAnchor={{
-                        x: 2.7,
-                        y: 0.8
-                    }}
-                >
+                {orphanages.map(orphanage => {
+                    return (
+                        <Marker
+                            key={orphanage.id}
+                            icon={mapMarkerIcon}
+                            coordinate={{
+                                latitude: orphanage.latitude,
+                                longitude: orphanage.longitude
+                            }}
+                            calloutAnchor={{
+                                x: 2.7,
+                                y: 0.8
+                            }}
+                        >
 
-                    <Callout tooltip={true} onPress={() => handleNavigateToOrphanageDetails()}>
-                        <View style={styles.calloutContainer}>
-                            <Text style={styles.calloutText}>Lar das Meninas</Text>
-                        </View>
-                    </Callout>
+                            <Callout tooltip={true} onPress={() => handleNavigateToOrphanageDetails(orphanage.id)}>
+                                <View style={styles.calloutContainer}>
+                                    <Text style={styles.calloutText}>{orphanage.name}</Text>
+                                </View>
+                            </Callout>
 
-                </Marker>
+                        </Marker>
+                    )
+                })}
             </MapView>
 
             <View style={styles.footer}>
-                <Text style={styles.footerText}>2 Orfanatos encontrados</Text>
+                <Text style={styles.footerText}>{orphanages.length} orfanatos encontrados</Text>
 
-                <TouchableOpacity style={styles.createOrphanageButton} onPress={() => { alert('Oi') }}>
+                <RectButton style={styles.createOrphanageButton} onPress={() => handleNavigateToCreateOrphanage()}>
                     <Feather name="plus" size={20} color="#FFF" />
-                </TouchableOpacity>
+                </RectButton>
             </View>
         </View>
     )
